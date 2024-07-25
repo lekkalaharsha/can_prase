@@ -4,3 +4,4 @@ env
 __pycache__
 *.log.1
 *.csv
+filtered_can_messages.csv

@@ -4,7 +4,7 @@ import cantools
 import csv
 
 # Define the path to your DBC file
-dbc_file_path = 'your_database_file.dbc'
+dbc_file_path = 'Zekrom_CANbus_1.dbc'
 
 # Load the DBC file
 db = cantools.database.load_file(dbc_file_path)
@@ -57,7 +57,7 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
                     signal_names.update(parsed_message.keys())
 
     # Define the CSV header
-    header = ['timestamp', 'interface', 'can_id', 'data_bytes'] + sorted(signal_names)
+    header = signal_names
 
     # Open the log file and CSV file for writing
     with open(log_file_path, 'r') as log_file, open(csv_file_path, mode='w', newline='') as csv_file:
@@ -77,4 +77,4 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
 
 # Specify the CAN ID to filter
 specified_can_id = input("Enter the CAN ID: ")
-process_log_file('candump-2024-07-22_091800.log.1', specified_can_id, 'filtered_can_messages.csv')
+process_log_file('candump-2024-07-18_013952.log.1', specified_can_id, 'filtered_1.csv')

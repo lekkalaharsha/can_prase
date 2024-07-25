@@ -12,16 +12,16 @@ db = cantools.database.load_file(dbc_file_path)
 # Regular expression pattern for parsing CAN log lines
 log_pattern = re.compile(r'\((\d+\.\d+)\) (\S+) (\S+)#(\S*)')
 
-def parse_can_message(line, specified_can_id):
-    """Parse a single CAN message line and return the decoded data."""
+def parse_can_message(line, can_ids):
+    """Parse a single CAN message line and return the decoded data if CAN ID matches."""
     match = log_pattern.match(line)
     if not match:
         return None
 
     timestamp_str, interface, can_id, data = match.groups()
 
-    # Check if the extracted CAN ID matches the specified CAN ID
-    if can_id != specified_can_id:
+    # Check if the extracted CAN ID matches any in the specified set
+    if can_id not in can_ids:
         return None
 
     timestamp = float(timestamp_str)
@@ -34,9 +34,19 @@ def parse_can_message(line, specified_can_id):
     try:
         can_id_int = int(can_id, 16)
         message_obj = db.get_message_by_frame_id(can_id_int)
-        decoded_data = message_obj.decode(data_bytes) if message_obj else {}
+        
+        # Check if the length of data_bytes matches the expected length
+        expected_length = message_obj.length
+        if len(data_bytes) != expected_length:
+            print(f"Warning: Data length for CAN ID {can_id} is {len(data_bytes)}, but expected length is {expected_length}.")
+            decoded_data = {}
+        else:
+            decoded_data = message_obj.decode(data_bytes) if message_obj else {}
     except KeyError:
         print(f"CAN ID {can_id} not found in the DBC file.")
+        decoded_data = {}
+    except ValueError as e:
+        print(f"Error decoding CAN ID {can_id}: {e}")
         decoded_data = {}
 
     return {
@@ -47,8 +57,8 @@ def parse_can_message(line, specified_can_id):
         **decoded_data  # Add decoded data to the result
     }
 
-def process_log_file(log_file_path, specified_can_id, csv_file_path):
-    """Process the log file and write the decoded data to a CSV file."""
+def process_log_file(log_file_path, can_ids, csv_file_path):
+    """Process the log file and write the decoded data to a CSV file for the given CAN IDs."""
     # List to store parsed messages
     parsed_messages = []
     signal_names = []
@@ -56,7 +66,7 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
     with open(log_file_path, 'r') as log_file:
         for line in log_file:
             if line.strip():
-                parsed_message = parse_can_message(line, specified_can_id)
+                parsed_message = parse_can_message(line, can_ids)
                 if parsed_message:
                     parsed_messages.append(parsed_message)
                     # Add new signal names to the list in the order they appear
@@ -68,6 +78,7 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
     header = ['timestamp', 'interface', 'can_id', 'data_bytes'] + signal_names
 
     # Sort messages by timestamp
+    parsed_messages.sort(key=lambda x: datetime.datetime.strptime(x['timestamp'], '%Y-%m-%d %H:%M:%S.%f'))
 
     # Open the CSV file for writing
     with open(csv_file_path, mode='w', newline='') as csv_file:
@@ -80,8 +91,11 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
             row = {key: message.get(key, '') for key in header}
             writer.writerow(row)
 
-    print(f'CSV file "{csv_file_path}" with CAN ID {specified_can_id} has been created successfully.')
+    print(f'CSV file "{csv_file_path}" with specified CAN IDs has been created successfully.')
 
-# Specify the CAN ID to filter
-specified_can_id = input("Enter the CAN ID: ")
-process_log_file('candump-2024-07-18_013952.log.1', specified_can_id, 'filtered_can_2.csv')
+# Specify the CAN IDs to filter
+can_ids_input = input("Enter the CAN IDs (comma-separated): ")
+can_ids = set(can_ids_input.split(','))
+
+# Process the log file for the given CAN IDs
+process_log_file('candump-2024-07-18_013952.log.1', can_ids, 'time_test_code_3.csv')

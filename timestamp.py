@@ -25,7 +25,8 @@ def parse_can_message(line, specified_can_id):
         return None
 
     timestamp = float(timestamp_str)
-    human_readable_timestamp = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S.%f')
+    # Convert the timestamp to a human-readable format with date and time
+    human_readable_timestamp = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
     # Convert data bytes to a byte array
     data_bytes = bytes.fromhex(data)
@@ -68,6 +69,7 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
     header = ['timestamp', 'interface', 'can_id', 'data_bytes'] + signal_names
 
     # Sort messages by timestamp
+    parsed_messages.sort(key=lambda x: datetime.datetime.strptime(x['timestamp'], '%Y-%m-%d %H:%M:%S'))
 
     # Open the CSV file for writing
     with open(csv_file_path, mode='w', newline='') as csv_file:
@@ -84,4 +86,6 @@ def process_log_file(log_file_path, specified_can_id, csv_file_path):
 
 # Specify the CAN ID to filter
 specified_can_id = input("Enter the CAN ID: ")
-process_log_file('candump-2024-07-18_013952.log.1', specified_can_id, 'filtered_can_2.csv')
+
+
+process_log_file('candump-2024-07-18_013952.log.1', specified_can_id, 'timestamp_1.csv')
