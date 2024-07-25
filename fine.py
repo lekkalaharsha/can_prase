@@ -6,7 +6,7 @@ import can
 # Define the paths to your files
 log_file_path = 'candump-2024-07-18_013952.log.1'
 dbc_file_path = 'Zekrom_CANbus_1.dbc'
-csv_file_path = 'filtered_can_messages.csv'
+csv_file_path = 'filtered.csv'
 
 # Load the DBC file
 db = cantools.database.load_file(dbc_file_path)
