@@ -3,3 +3,4 @@ GUI
 env
 __pycache__
 *.log.1
+*.csv

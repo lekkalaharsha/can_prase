@@ -34,15 +34,22 @@ def parse_can_message(line):
             "interface": interface,
             "can_id": can_id,
             "data_bytes": data_bytes,
-            "data_integers": data_integers
+            
         }
     except Exception as e:
         print(f"Error parsing line: {line.strip()} - {e}")
         return None
 
-# Read the log file
-with open(log_file_path, 'r') as file:
-    lines = file.readlines()
+# Read the log file with error handling
+try:
+    with open(log_file_path, 'r') as file:
+        lines = file.readlines()
+except FileNotFoundError:
+    print(f"Log file '{log_file_path}' not found.")
+    exit(1)
+except IOError as e:
+    print(f"Error reading log file '{log_file_path}': {e}")
+    exit(1)
 
 # Parse all messages
 parsed_messages = [parse_can_message(line) for line in lines if line.strip()]
@@ -51,7 +58,7 @@ parsed_messages = [parse_can_message(line) for line in lines if line.strip()]
 parsed_messages = [msg for msg in parsed_messages if msg]
 
 # Specify the CAN ID to filter
-specified_can_id = input("enter the can id:")
+specified_can_id = input("Enter the CAN ID: ")
 
 # Filter messages by the specified CAN ID
 filtered_messages = [msg for msg in parsed_messages if msg['can_id'] == specified_can_id]
@@ -60,22 +67,25 @@ filtered_messages = [msg for msg in parsed_messages if msg['can_id'] == specifie
 csv_file_path = 'filtered_can_messages.csv'
 
 # Define the CSV header
-csv_header = ['timestamp', 'interface', 'can_id', 'data_bytes', 'data_integers']
+csv_header = ['timestamp', 'interface', 'can_id', 'data_bytes']
 
-# Write the filtered messages to the CSV file
-with open(csv_file_path, mode='w', newline='') as csv_file:
-    writer = csv.DictWriter(csv_file, fieldnames=csv_header)
-    
-    # Write the header
-    writer.writeheader()
-    
-    # Write each filtered message
-    for message in filtered_messages:
-        # Convert data_bytes and data_integers to strings for CSV storage
-        message['data_bytes'] = ' '.join(message['data_bytes'])
-        message['data_integers'] = ' '.join(map(str, message['data_integers']))
+# Write the filtered messages to the CSV file with error handling
+try:
+    with open(csv_file_path, mode='w', newline='') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=csv_header)
         
-        # Write the row
-        writer.writerow(message)
+        # Write the header
+        writer.writeheader()
+        
+        # Write each filtered message
+        for message in filtered_messages:
+            # Convert data_bytes to strings for CSV storage
+            message['data_bytes'] = ' '.join(message['data_bytes'])
+            
+            # Write the row
+            writer.writerow(message)
+except IOError as e:
+    print(f"Error writing CSV file '{csv_file_path}': {e}")
+    exit(1)
 
 print(f'CSV file "{csv_file_path}" with CAN ID {specified_can_id} has been created successfully.')

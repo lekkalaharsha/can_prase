@@ -8,9 +8,9 @@ matrix = canmatrix.formats.loadp(dbc_file_path)
 for name, db in matrix.items():
     # Iterate over frames (messages)
     for frame in db.frames:
-        print(frame)
+        print(frame.decode())
       
-        # Iterate over signals in each message
+        # Iterate over signals 1in each message
         for signal in frame.signals:
-            print(signal)
+            print(signal.add_values)
        
